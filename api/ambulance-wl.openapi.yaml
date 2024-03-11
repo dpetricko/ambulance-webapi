@@ -1,0 +1,357 @@
+openapi: 3.0.0
+servers:
+  - description: Cluster Endpoint
+    url: /api
+info:
+  description: Ambulance Waiting List management for Web-In-Cloud system
+  version: '1.0.0'
+  title: Waiting List Api
+  contact:
+    email: <your_email>
+  license:
+    name: CC BY 4.0
+    url: 'https://creativecommons.org/licenses/by/4.0/'
+tags:
+  - name: ambulanceWaitingList
+    description: Ambulance Waiting List Api
+  - name: ambulanceConditions
+    description: Patient conditions and symptoms handled in the ambulance
+
+paths:
+  '/waiting-list/{ambulanceId}/entries':
+    get:
+      tags:
+        - ambulanceWaitingList
+      summary: Provides the ambulance waiting list
+      operationId: getWaitingListEntries
+      description: By using ambulanceId you get list of entries in ambulance waiting list
+      parameters:
+        - in: path
+          name: ambulanceId
+          description: pass the id of the particular ambulance
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: value of the waiting list entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WaitingListEntry'
+              examples:
+                response:
+                  $ref: '#/components/examples/WaitingListEntriesExample'
+        '404':
+          description: Ambulance with such ID does not exist
+    post:
+      tags:
+        - ambulanceWaitingList
+      summary: Saves new entry into waiting list
+      operationId: createWaitingListEntry
+      description: Use this method to store new entry into the waiting list.
+      parameters:
+        - in: path
+          name: ambulanceId
+          description: pass the id of the particular ambulance
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WaitingListEntry'
+            examples:
+              request-sample:
+                $ref: '#/components/examples/WaitingListEntryExample'
+        description: Waiting list entry to store
+        required: true
+      responses:
+        '200':
+          description: >-
+            Value of the waiting list entry with re-computed estimated time of
+            ambulance entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaitingListEntry'
+              examples:
+                updated-response:
+                  $ref: '#/components/examples/WaitingListEntryExample'
+        '400':
+          description: Missing mandatory properties of input object.
+        '404':
+          description: Ambulance with such ID does not exists
+        '409':
+          description: Entry with the specified id already exists
+  '/waiting-list/{ambulanceId}/entries/{entryId}':
+    get:
+      tags:
+        - ambulanceWaitingList
+      summary: Provides details about waiting list entry
+      operationId: getWaitingListEntry
+      description: >-
+        By using ambulanceId and entryId you can details of particular entry
+        item ambulance.
+      parameters:
+        - in: path
+          name: ambulanceId
+          description: pass the id of the particular ambulance
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: entryId
+          description: pass the id of the particular entry in the waiting list
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: value of the waiting list entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaitingListEntry'
+              examples:
+                response:
+                  $ref: '#/components/examples/WaitingListEntryExample'
+        '404':
+          description: Ambulance or Entry with such ID does not exists
+    put:
+      tags:
+        - ambulanceWaitingList
+      summary: Updates specific entry
+      operationId: updateWaitingListEntry
+      description: Use this method to update content of the waiting list entry.
+      parameters:
+        - in: path
+          name: ambulanceId
+          description: pass the id of the particular ambulance
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: entryId
+          description: pass the id of the particular entry in the waiting list
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WaitingListEntry'
+            examples:
+              request:
+                $ref: '#/components/examples/WaitingListEntryExample'
+        description: Waiting list entry to update
+        required: true
+      responses:
+        '200':
+          description: >-
+            value of the waiting list entry with re-computed estimated time of
+            ambulance entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WaitingListEntry'
+              examples:
+                response:
+                  $ref: '#/components/examples/WaitingListEntryExample'
+        '403':
+          description: >-
+            Value of the entryID and the data id is mismatching. Details are
+            provided in the response body.
+        '404':
+          description: Ambulance or Entry with such ID does not exists
+    delete:
+      tags:
+        - ambulanceWaitingList
+      summary: Deletes specific entry
+      operationId: deleteWaitingListEntry
+      description: Use this method to delete the specific entry from the waiting list.
+      parameters:
+        - in: path
+          name: ambulanceId
+          description: pass the id of the particular ambulance
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: entryId
+          description: pass the id of the particular entry in the waiting list
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Item deleted
+        '404':
+          description: Ambulance or Entry with such ID does not exists
+  '/waiting-list/{ambulanceId}/condition':
+    get:
+      tags:
+        - ambulanceConditions
+      summary: Provides the list of conditions associated with ambulance
+      operationId: getConditions
+      description: By using ambulanceId you get list of predefined conditions
+      parameters:
+        - in: path
+          name: ambulanceId
+          description: pass the id of the particular ambulance
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: value of the predefined conditions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Condition'
+              examples:
+                response:
+                  $ref: '#/components/examples/ConditionsListExample'
+        '404':
+          description: Ambulance with such ID does not exists
+
+components:
+  schemas:
+    WaitingListEntry:
+      type: object
+      required: [id, patientId, waitingSince, estimatedDurationMinutes]
+      properties:
+        id:
+          type: string
+          example: x321ab3
+          description: Unique id of the entry in this waiting list
+        name:
+          type: string
+          example: Jožko Púčik
+          description: Name of patient in waiting list
+        patientId:
+          type: string
+          example: 460527-jozef-pucik
+          description: Unique identifier of the patient known to Web-In-Cloud system
+        waitingSince:
+          type: string
+          format: date-time
+          example: '2038-12-24T10:05:00Z'
+          description: Timestamp since when the patient entered the waiting list
+        estimatedStart:
+          type: string
+          format: date-time
+          example: '2038-12-24T10:35:00Z'
+          description: Estimated time of entering ambulance. Ignored on post.
+        estimatedDurationMinutes:
+          type: integer
+          format: int32
+          example: 15
+          description: >-
+            Estimated duration of ambulance visit. If not provided then it will
+            be computed based on condition and ambulance settings
+        condition:
+          $ref: '#/components/schemas/Condition'
+      example:
+        $ref: '#/components/examples/WaitingListEntryExample'
+    Condition:
+      description: 'Describes disease, symptoms, or other reasons of patient   visit'
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          example: Teploty
+        code:
+          type: string
+          example: subfebrilia
+        reference:
+          type: string
+          format: url
+          example: 'https://zdravoteka.sk/priznaky/zvysena-telesna-teplota/'
+          description: Link to encyclopedical explanation of the patient's condition
+        typicalDurationMinutes:
+          type: integer
+          format: int32
+          example: 20
+      example:
+        $ref: '#/components/examples/ConditionExample'
+
+  examples:
+    WaitingListEntryExample:
+      summary: Ľudomír Zlostný waiting
+      description: |
+        Entry represents a patient waiting in the ambulance prep room with
+        defined symptoms
+      value:
+        id: x321ab3
+        name: Ľudomír Zlostný
+        patientId: 74895-ludomir-zlostny
+        waitingSince: '2038-12-24T10:05:00.000Z'
+        estimatedStart: '2038-12-24T10:35:00.000Z'
+        estimatedDurationMinutes: 15
+        condition:
+          value: Nevoľnosť
+          code: nausea
+          reference: 'https://zdravoteka.sk/priznaky/nevolnost/'
+    ConditionExample:
+      summary: Conditions and symptoms
+      description: list of few symptoms that can be chosen by patients
+      value:
+        valuee: Teploty
+        code: subfebrilia
+        reference: >-
+          https://zdravoteka.sk/priznaky/zvysena-telesna-teplota/
+    WaitingListEntriesExample:
+      summary: List of waiting patients
+      description: |
+        Example waiting list containing 2 patients
+      value:
+        - id: x321ab3
+          name: Jožko Púčik
+          patientId: 460527-jozef-pucik
+          waitingSince: '2038-12-24T10:05:00.000Z'
+          estimatedStart: '2038-12-24T10:35:00.000Z'
+          estimatedDurationMinutes: 15
+          condition:
+            value: Teploty
+            code: subfebrilia
+            reference: 'https://zdravoteka.sk/priznaky/zvysena-telesna-teplota/'
+        - id: x321ab4
+          name: Ferdinand Trety
+          patientId: 780907-ferdinand-tre
+          waitingSince: '2038-12-24T10:25:00.000Z'
+          estimatedStart: '2038-12-24T10:50:00.000Z'
+          estimatedDurationMinutes: 25
+          condition:
+            value: Nevoľnosť
+            code: nausea
+            reference: 'https://zdravoteka.sk/priznaky/nevolnost/'
+    ConditionsListExample:
+      summary: Sample of GP ambulance conditions
+      description: |
+        Example list of possible conditions, symptoms, and visit reasons
+      value:
+        - value: Teploty
+          code: subfebrilia
+          reference: 'https://zdravoteka.sk/priznaky/zvysena-telesna-teplota/'
+          typicalDurationMinutes: 20
+        - value: Nevoľnosť
+          code: nausea
+          reference: 'https://zdravoteka.sk/priznaky/nevolnost/'
+          typicalDurationMinutes: 45
+        - value: Kontrola
+          code: followup
+          typicalDurationMinutes: 15
+        - value: Administratívny úkon
+          code: administration
+          typicalDurationMinutes: 10
+        - value: Odber krvi
+          code: blood-test
+          typicalDurationMinutes: 10
