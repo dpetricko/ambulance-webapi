@@ -1,0 +1,16 @@
+{{>partial_header}}
+package {{packageName}}
+
+import (
+    "github.com/gin-gonic/gin"
+)
+
+func AddRoutes(engine *gin.Engine) {
+  group := engine.Group("{{{basePathWithoutHost}}}")
+  {{#apiInfo}}{{#apis}}
+  {
+    api := new{{classname}}()
+    api.addRoutes(group)
+  }
+  {{/apis}}{{/apiInfo}}
+}

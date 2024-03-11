@@ -1,0 +1,50 @@
+{{>partial_header}}
+ package {{packageName}}
+
+{{#operations}}
+import (
+   "net/http"
+
+   "github.com/gin-gonic/gin"
+)
+
+type {{classname}} interface {
+
+   // internal registration of api routes
+   addRoutes(routerGroup *gin.RouterGroup)
+
+   {{#operation}}
+    // {{nickname}} - {{{summary}}}{{#isDeprecated}}
+   // Deprecated{{/isDeprecated}}
+   {{nickname}}(ctx *gin.Context)
+
+   {{/operation}}
+ }
+
+// partial implementation of {{classname}} - all functions must be implemented in add on files
+type impl{{classname}} struct {
+
+}
+
+func new{{classname}}() {{classname}} {
+  return &impl{{classname}}{}
+}
+
+func (this *impl{{classname}}) addRoutes(routerGroup *gin.RouterGroup) {
+  {{#operation}}
+  routerGroup.Handle( http.Method{{httpMethod}}, "{{{path}}}", this.{{nickname}})
+  {{/operation}}
+}
+
+// Copy following section to separate file, uncomment, and implement accordingly
+{{#operation}}
+// // {{nickname}} - {{{summary}}}{{#isDeprecated}}
+// // Deprecated{{/isDeprecated}}
+// func (this *impl{{classname}}) {{nickname}}(ctx *gin.Context) {
+//  	ctx.AbortWithStatus(http.StatusNotImplemented)
+// }
+//
+{{/operation}}
+
+{{/operations}}
+
