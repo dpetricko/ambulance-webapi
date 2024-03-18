@@ -1,0 +1,28 @@
+services:
+    mongo_db:
+        image: mongo:7.0-rc
+        container_name: mongo_db
+        restart: always
+        ports:
+        - 27017:27017
+        volumes:
+        - db_data:/data/db
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${AMBULANCE_API_MONGODB_USERNAME}
+            MONGO_INITDB_ROOT_PASSWORD: ${AMBULANCE_API_MONGODB_PASSWORD}
+    mongo_express:
+        image: mongo-express
+        container_name: mongo_express
+        restart: always
+        ports:
+        - 8081:8081
+        environment:
+            ME_CONFIG_MONGODB_ADMINUSERNAME: ${AMBULANCE_API_MONGODB_USERNAME}
+            ME_CONFIG_MONGODB_ADMINPASSWORD: ${AMBULANCE_API_MONGODB_PASSWORD}
+            ME_CONFIG_MONGODB_SERVER: mongo_db
+            ME_CONFIG_BASICAUTH_USERNAME: mexpress
+            ME_CONFIG_BASICAUTH_PASSWORD: mexpress
+        links:
+        - mongo_db
+volumes:
+    db_data: {}
