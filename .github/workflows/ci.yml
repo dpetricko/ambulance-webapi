@@ -1,0 +1,80 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Test and Publish WebAPi Container Image
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v1*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:  {} # allow manually trigger workflow
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get Go version from go.mod
+      id: get_go_version
+      run: echo "go_version=$(grep -m1 'go ' go.mod | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+       go-version: ${{ steps.get_go_version.outputs.go_version }}
+
+    - name: Generate api controllers interfaces
+      uses: craicoverflow/openapi-generator-generate-action@v1.2.1
+      with:
+        # version: 7.0.0-beta - at time of writing this text only prerelease was available
+        generator: go-gin-server
+        input: api/ambulance-wl.openapi.yaml
+        additional-properties: apiPath=internal/ambulance_wl,packageName=ambulance_wl
+        template: scripts/templates
+
+    - name: Build
+      run: go build -v ./cmd/ambulance-api-service
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Docker Setup QEMU
+      uses: docker/setup-qemu-action@v2.2.0
+
+    - name: Docker Setup Buildx
+      uses: docker/setup-buildx-action@v2.9.1
+
+    - name: Docker Metadata action
+      id: meta
+      uses: docker/metadata-action@v4.6.0
+      with:
+        images: <docker-id>/ambulance-wl-webapi
+        tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=branch,suffix={{date '.YYYYMMDD.HHmm'}}
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Docker Login
+      uses: docker/login-action@v2.2.0
+      with:
+         username: ${{ secrets.DOCKERHUB_USERNAME }}
+         password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v4.1.1
+      with:
+        context: .
+        file: ./build/docker/Dockerfile
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64/v8
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
