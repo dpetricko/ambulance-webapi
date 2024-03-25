@@ -16,6 +16,8 @@ tags:
     description: Ambulance Waiting List Api
   - name: ambulanceConditions
     description: Patient conditions and symptoms handled in the ambulance
+  - name: ambulances
+    description: Ambulance details
 
 paths:
   '/waiting-list/{ambulanceId}/entries':
@@ -220,7 +222,57 @@ paths:
                   $ref: '#/components/examples/ConditionsListExample'
         '404':
           description: Ambulance with such ID does not exists
-
+  '/ambulance':
+    post:
+      tags:
+        - ambulances
+      summary: Saves new ambulance definition
+      operationId: createAmbulance
+      description: Use this method to initialize new ambulance in the system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Ambulance"
+            examples:
+              request-sample:
+                $ref: "#/components/examples/AmbulanceExample"
+        description: Ambulance details to store
+        required: true
+      responses:
+        "200":
+          description: >-
+            Value of stored ambulance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ambulance"
+              examples:
+                updated-response:
+                  $ref: "#/components/examples/AmbulanceExample"
+        "400":
+          description: Missing mandatory properties of input object.
+        "409":
+          description: Entry with the specified id already exists
+  '/ambulance/{ambulanceId}':
+    delete:
+      tags:
+        - ambulances
+      summary: Deletes specific ambulance
+      operationId: deleteAmbulance
+      description: Use this method to delete the specific ambulance from the system.
+      parameters:
+        - in: path
+          name: ambulanceId
+          description: pass the id of the particular ambulance
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Item deleted
+        "404":
+          description: Ambulance with such ID does not exist
 components:
   schemas:
     WaitingListEntry:
@@ -282,7 +334,31 @@ components:
           example: 20
       example:
         $ref: '#/components/examples/ConditionExample'
-
+    Ambulance:
+      type: object
+      required: [ "id", "name", "roomNumber"]
+      properties:
+        id:
+          type: string
+          example: dentist-warenova
+          description: Unique identifier of the ambulance
+        name:
+          type: string
+          example: Zubná ambulancia Dr. Warenová
+          description: Human readable display name of the ambulance
+        roomNumber:
+          type: string
+          example: 356 - 3.posch
+        waitingList:
+          type: array
+          items:
+            $ref: '#/components/schemas/WaitingListEntry'
+        predefinedConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Condition'
+      example:
+        $ref: "#/components/examples/AmbulanceExample"
   examples:
     WaitingListEntryExample:
       summary: Ľudomír Zlostný waiting
@@ -333,6 +409,53 @@ components:
             value: Nevoľnosť
             code: nausea
             reference: 'https://zdravoteka.sk/priznaky/nevolnost/'
+    AmbulanceExample:
+      summary: Sample GP ambulance
+      description: |
+        Example of GP ambulance with waiting list and predefined conditions
+      value:
+        id: gp-warenova
+        name: Ambulancia všeobecného lekárstva Dr. Warenová
+        roomNumber: 356 - 3.posch
+        waitingList:
+          - id: x321ab3
+            name: Jožko Púčik
+            patientId: 460527-jozef-pucik
+            waitingSince: "2038-12-24T10:05:00.000Z"
+            estimatedStart: "2038-12-24T10:35:00.000Z"
+            estimatedDurationMinutes: 15
+            condition:
+            value: Teploty
+            code: subfebrilia
+            reference: "https://zdravoteka.sk/priznaky/zvysena-telesna-teplota/"
+          - id: x321ab4
+            name: Ferdinand Trety
+            patientId: 780907-ferdinand-tre
+            waitingSince: "2038-12-24T10:25:00.000Z"
+            estimatedStart: "2038-12-24T10:50:00.000Z"
+            estimatedDurationMinutes: 25
+            condition:
+            value: Nevoľnosť
+            code: nausea
+            reference: "https://zdravoteka.sk/priznaky/nevolnost/"
+        predefinedConditions:
+          - value: Teploty
+            code: subfebrilia
+            reference: "https://zdravoteka.sk/priznaky/zvysena-telesna-teplota/"
+            typicalDurationMinutes: 20
+          - value: Nevoľnosť
+            code: nausea
+            reference: "https://zdravoteka.sk/priznaky/nevolnost/"
+            typicalDurationMinutes: 45
+          - value: Kontrola
+            code: followup
+            typicalDurationMinutes: 15
+          - value: Administratívny úkon
+            code: administration
+            typicalDurationMinutes: 10
+          - value: Odber krvi
+            code: blood-test
+            typicalDurationMinutes: 10
     ConditionsListExample:
       summary: Sample of GP ambulance conditions
       description: |

@@ -1,6 +1,8 @@
 internal/ambulance_wl/README.md
 internal/ambulance_wl/api_ambulance_conditions.go
 internal/ambulance_wl/api_ambulance_waiting_list.go
+internal/ambulance_wl/api_ambulances.go
+internal/ambulance_wl/model_ambulance.go
 internal/ambulance_wl/model_condition.go
 internal/ambulance_wl/model_waiting_list_entry.go
 internal/ambulance_wl/routers.go
