@@ -4,7 +4,7 @@ servers:
     url: /api
 info:
   description: Ambulance Waiting List management for Web-In-Cloud system
-  version: "1.0.1"
+  version: "1.0.0"
   title: Waiting List Api
   contact:
     email: <your_email>
