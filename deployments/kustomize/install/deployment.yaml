@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dp-ambulance-webapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      pod: dp-ambulance-webapi-label
+  template:
+    metadata:
+      labels:
+        pod: dp-ambulance-webapi-label
+    spec:
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: dp-ambulance-webapi-mongodb-init
+      initContainers:
+        - name: init-mongodb
+          image: mongo:latest
+          imagePullPolicy: Always
+          command: ["mongosh", "--nodb", "-f", "/scripts/init-db.js"]
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /scripts
+          env:
+            - name: AMBULANCE_API_PORT
+              value: "8080"
+            - name: AMBULANCE_API_MONGODB_HOST
+              value: mongodb
+            - name: AMBULANCE_API_MONGODB_PORT
+              value: "27017"
+            - name: AMBULANCE_API_MONGODB_USERNAME
+              value: ""
+            - name: AMBULANCE_API_MONGODB_PASSWORD
+              value: ""
+            - name: AMBULANCE_API_MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: dp-ambulance-webapi-config
+                  key: database
+            - name: AMBULANCE_API_MONGODB_COLLECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: dp-ambulance-webapi-config
+                  key: collection
+            - name: RETRY_CONNECTION_SECONDS
+              value: "5"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "0.01"
+            limits:
+              memory: "256Mi"
+              cpu: "0.1"
+      containers:
+        - name: dp-ambulance-wl-webapi-container
+          image: dpaho/ambulance-wl-webapi:latest
+          imagePullPolicy: Always
+          ports:
+            - name: webapi-port
+              containerPort: 8080
+          env:
+            - name: AMBULANCE_API_ENVIRONMENT
+              value: production
+            - name: AMBULANCE_API_PORT
+              value: "8080"
+            - name: AMBULANCE_API_MONGODB_HOST
+              value: mongodb
+            - name: AMBULANCE_API_MONGODB_PORT
+              value: "27017"
+              # change to actual value
+            - name: AMBULANCE_API_MONGODB_USERNAME
+              value: ""
+              #change to actual value
+            - name: AMBULANCE_API_MONGODB_PASSWORD
+              value: ""
+            - name: AMBULANCE_API_MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: dp-ambulance-webapi-config
+                  key: database
+            - name: AMBULANCE_API_MONGODB_COLLECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: dp-ambulance-webapi-config
+                  key: collection
+            - name: AMBULANCE_API_MONGODB_TIMEOUT_SECONDS
+              value: "5"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "0.01"
+            limits:
+              memory: "512Mi"
+              cpu: "0.3"
+        - name: openapi-ui
+          image: swaggerapi/swagger-ui
+          imagePullPolicy: Always
+          ports:
+            - name: api-ui
+              containerPort: 8081
+          env:
+            - name: PORT
+              value: "8081"
+            - name: URL
+              value: /openapi
+            - name: BASE_URL
+              value: /openapi-ui
+            - name: FILTER
+              value: "true"
+            - name: DISPLAY_OPERATION_ID
+              value: "true"
+          resources:
+            requests:
+              memory: "16M"
+              cpu: "0.01"
+            limits:
+              memory: "64M"
+              cpu: "0.1"

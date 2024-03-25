@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: dp-ambulance-webapi
+spec:
+  selector:
+    pod: dp-ambulance-webapi-label
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: webapi-port
