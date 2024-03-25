@@ -1,0 +1,5 @@
+internal/ambulance_wl/api_*
+internal/ambulance_wl/model_*
+internal/ambulance_wl/routers.go
+build/
+deployments/
