@@ -44,10 +44,10 @@ type mongoSvc[DocType interface{}] struct {
 
 func NewMongoService[DocType interface{}](config MongoServiceConfig) DbService[DocType] {
 	enviro := func(name string, defaultValue string) string {
-		if value, ok := os.LookupEnv(name); ok {
+	if value, ok := os.LookupEnv(name); ok {
 			return value
-		}
-		return defaultValue
+	}
+	return defaultValue
 	}
 
 	svc := &mongoSvc[DocType]{}
@@ -140,106 +140,106 @@ func (this *mongoSvc[DocType]) connect(ctx context.Context) (*mongo.Client, erro
 func (this *mongoSvc[DocType]) Disconnect(ctx context.Context) error {
     client := this.client.Load()
 
-    if client != nil {
-        this.clientLock.Lock()
-        defer this.clientLock.Unlock()
+	if client != nil {
+			this.clientLock.Lock()
+			defer this.clientLock.Unlock()
 
-        client = this.client.Load()
-        defer this.client.Store(nil)
-        if client != nil {
-            if err := client.Disconnect(ctx); err != nil {
-                return err
-            }
-        }
-    }
-    return nil
+			client = this.client.Load()
+			defer this.client.Store(nil)
+			if client != nil {
+					if err := client.Disconnect(ctx); err != nil {
+							return err
+					}
+			}
+	}
+	return nil
 }
 
 func (this *mongoSvc[DocType]) CreateDocument(ctx context.Context, id string, document *DocType) error {
-    ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
-    defer contextCancel()
-    client, err := this.connect(ctx)
-    if err != nil {
-        return err
-    }
-    db := client.Database(this.DbName)
-    collection := db.Collection(this.Collection)
-    result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
-    switch result.Err() {
-    case nil: // no error means there is conflicting document
-        return ErrConflict
-    case mongo.ErrNoDocuments:
-        // do nothing, this is expected
-    default: // other errors - return them
-        return result.Err()
-    }
+	ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
+	defer contextCancel()
+	client, err := this.connect(ctx)
+	if err != nil {
+			return err
+	}
+	db := client.Database(this.DbName)
+	collection := db.Collection(this.Collection)
+	result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
+	switch result.Err() {
+	case nil: // no error means there is conflicting document
+			return ErrConflict
+	case mongo.ErrNoDocuments:
+			// do nothing, this is expected
+	default: // other errors - return them
+			return result.Err()
+	}
 
-    _, err = collection.InsertOne(ctx, document)
-    return err
+	_, err = collection.InsertOne(ctx, document)
+	return err
 }
 
 func (this *mongoSvc[DocType]) FindDocument(ctx context.Context, id string) (*DocType, error) {
-    ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
-    defer contextCancel()
-    client, err := this.connect(ctx)
-    if err != nil {
-        return nil, err
-    }
-    db := client.Database(this.DbName)
-    collection := db.Collection(this.Collection)
-    result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
-    switch result.Err() {
-    case nil:
-    case mongo.ErrNoDocuments:
-        return nil, ErrNotFound
-    default: // other errors - return them
-        return nil, result.Err()
-    }
-    var document *DocType
-    if err := result.Decode(&document); err != nil {
-        return nil, err
-    }
-    return document, nil
+	ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
+	defer contextCancel()
+	client, err := this.connect(ctx)
+	if err != nil {
+			return nil, err
+	}
+	db := client.Database(this.DbName)
+	collection := db.Collection(this.Collection)
+	result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
+	switch result.Err() {
+	case nil:
+	case mongo.ErrNoDocuments:
+			return nil, ErrNotFound
+	default: // other errors - return them
+			return nil, result.Err()
+	}
+	var document *DocType
+	if err := result.Decode(&document); err != nil {
+			return nil, err
+	}
+	return document, nil
 }
 
 func (this *mongoSvc[DocType]) UpdateDocument(ctx context.Context, id string, document *DocType) error {
-    ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
-    defer contextCancel()
-    client, err := this.connect(ctx)
-    if err != nil {
-        return err
-    }
-    db := client.Database(this.DbName)
-    collection := db.Collection(this.Collection)
-    result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
-    switch result.Err() {
-    case nil:
-    case mongo.ErrNoDocuments:
-        return ErrNotFound
-    default: // other errors - return them
-        return result.Err()
-    }
-    _, err = collection.ReplaceOne(ctx, bson.D{{Key: "id", Value: id}}, document)
-    return err
+	ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
+	defer contextCancel()
+	client, err := this.connect(ctx)
+	if err != nil {
+			return err
+	}
+	db := client.Database(this.DbName)
+	collection := db.Collection(this.Collection)
+	result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
+	switch result.Err() {
+	case nil:
+	case mongo.ErrNoDocuments:
+			return ErrNotFound
+	default: // other errors - return them
+			return result.Err()
+	}
+	_, err = collection.ReplaceOne(ctx, bson.D{{Key: "id", Value: id}}, document)
+	return err
 }
 
 func (this *mongoSvc[DocType]) DeleteDocument(ctx context.Context, id string) error {
-    ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
-    defer contextCancel()
-    client, err := this.connect(ctx)
-    if err != nil {
-        return err
-    }
-    db := client.Database(this.DbName)
-    collection := db.Collection(this.Collection)
-    result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
-    switch result.Err() {
-    case nil:
-    case mongo.ErrNoDocuments:
-        return ErrNotFound
-    default: // other errors - return them
-        return result.Err()
-    }
-    _, err = collection.DeleteOne(ctx, bson.D{{Key: "id", Value: id}})
-    return err
+	ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
+	defer contextCancel()
+	client, err := this.connect(ctx)
+	if err != nil {
+			return err
+	}
+	db := client.Database(this.DbName)
+	collection := db.Collection(this.Collection)
+	result := collection.FindOne(ctx, bson.D{{Key: "id", Value: id}})
+	switch result.Err() {
+	case nil:
+	case mongo.ErrNoDocuments:
+			return ErrNotFound
+	default: // other errors - return them
+			return result.Err()
+	}
+	_, err = collection.DeleteOne(ctx, bson.D{{Key: "id", Value: id}})
+	return err
 }
