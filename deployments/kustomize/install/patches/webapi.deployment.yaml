@@ -4,7 +4,7 @@ metadata:
   name: dp-ambulance-webapi
 spec:
   template:
-   spec:
+    spec:
       initContainers:
         - name: init-mongodb
           env:

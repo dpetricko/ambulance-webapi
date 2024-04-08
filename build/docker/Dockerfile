@@ -13,7 +13,6 @@ RUN docker-entrypoint.sh generate -c /local/scripts/generator-cfg.yaml
 ENTRYPOINT ["bash"]
 
 ############################################
-
 FROM golang:latest AS build
 
 WORKDIR /app
@@ -40,7 +39,6 @@ RUN CGO_ENABLED=0 GOOS=linux \
       -o ./ambulance-webapi-srv ./cmd/ambulance-api-service
 
 ############################################
-
 FROM scratch
 
 # see https://github.com/opencontainers/image-spec/blob/main/annotations.md for details
@@ -53,7 +51,7 @@ ENV AMBULANCE_API_ENVIRONMENT=production
 ENV AMBULANCE_API_PORT=8080
 ENV AMBULANCE_API_MONGODB_HOST=mongo
 ENV AMBULANCE_API_MONGODB_PORT=27017
-ENV AMBULANCE_API_MONGODB_DATABASE=dp-ambulance
+ENV AMBULANCE_API_MONGODB_DATABASE=pfx-ambulance
 ENV AMBULANCE_API_MONGODB_COLLECTION=ambulance
 ENV AMBULANCE_API_MONGODB_USERNAME=root
 ENV AMBULANCE_API_MONGODB_PASSWORD=

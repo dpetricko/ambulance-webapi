@@ -44,101 +44,101 @@ type mongoSvc[DocType interface{}] struct {
 
 func NewMongoService[DocType interface{}](config MongoServiceConfig) DbService[DocType] {
 	enviro := func(name string, defaultValue string) string {
-	if value, ok := os.LookupEnv(name); ok {
-			return value
-	}
-	return defaultValue
+			if value, ok := os.LookupEnv(name); ok {
+					return value
+			}
+			return defaultValue
 	}
 
 	svc := &mongoSvc[DocType]{}
 	svc.MongoServiceConfig = config
 
 	if svc.ServerHost == "" {
-		svc.ServerHost = enviro("AMBULANCE_API_MONGODB_HOST", "localhost")
+			svc.ServerHost = enviro("AMBULANCE_API_MONGODB_HOST", "localhost")
 	}
 
 	if svc.ServerPort == 0 {
-		port := enviro("AMBULANCE_API_MONGODB_PORT", "27017")
-		if port, err := strconv.Atoi(port); err == nil {
-			svc.ServerPort = port
-		} else {
-			log.Printf("Invalid port value: %v", port)
-			svc.ServerPort = 27017
-		}
+			port := enviro("AMBULANCE_API_MONGODB_PORT", "27017")
+			if port, err := strconv.Atoi(port); err == nil {
+					svc.ServerPort = port
+			} else {
+					log.Printf("Invalid port value: %v", port)
+					svc.ServerPort = 27017
+			}
 	}
 
 	if svc.UserName == "" {
-		svc.UserName = enviro("AMBULANCE_API_MONGODB_USERNAME", "")
+			svc.UserName = enviro("AMBULANCE_API_MONGODB_USERNAME", "")
 	}
 
 	if svc.Password == "" {
-		svc.Password = enviro("AMBULANCE_API_MONGODB_PASSWORD", "")
+			svc.Password = enviro("AMBULANCE_API_MONGODB_PASSWORD", "")
 	}
 
 	if svc.DbName == "" {
-		svc.DbName = enviro("AMBULANCE_API_MONGODB_DATABASE", "dp-ambulance-wl")
+			svc.DbName = enviro("AMBULANCE_API_MONGODB_DATABASE", "dp-ambulance-wl")
 	}
 
 	if svc.Collection == "" {
-		svc.Collection = enviro("AMBULANCE_API_MONGODB_COLLECTION", "ambulance")
+			svc.Collection = enviro("AMBULANCE_API_MONGODB_COLLECTION", "ambulance")
 	}
 
 	if svc.Timeout == 0 {
-		seconds := enviro("AMBULANCE_API_MONGODB_TIMEOUT_SECONDS", "10")
-		if seconds, err := strconv.Atoi(seconds); err == nil {
-			svc.Timeout = time.Duration(seconds) * time.Second
-		} else {
-			log.Printf("Invalid timeout value: %v", seconds)
-			svc.Timeout = 10 * time.Second
-		}
+			seconds := enviro("AMBULANCE_API_MONGODB_TIMEOUT_SECONDS", "10")
+			if seconds, err := strconv.Atoi(seconds); err == nil {
+					svc.Timeout = time.Duration(seconds) * time.Second
+			} else {
+					log.Printf("Invalid timeout value: %v", seconds)
+					svc.Timeout = 10 * time.Second
+			}
 	}
 
 	log.Printf(
-		"MongoDB config: //%v@%v:%v/%v/%v",
-		svc.UserName,
-		svc.ServerHost,
-		svc.ServerPort,
-		svc.DbName,
-		svc.Collection,
+			"MongoDB config: //%v@%v:%v/%v/%v",
+			svc.UserName,
+			svc.ServerHost,
+			svc.ServerPort,
+			svc.DbName,
+			svc.Collection,
 	)
 	return svc
 }
 
 func (this *mongoSvc[DocType]) connect(ctx context.Context) (*mongo.Client, error) {
-    // optimistic check
-    client := this.client.Load()
-    if client != nil {
-        return client, nil
-    }
+	// optimistic check
+	client := this.client.Load()
+	if client != nil {
+			return client, nil
+	}
 
-    this.clientLock.Lock()
-    defer this.clientLock.Unlock()
-    // pesimistic check
-    client = this.client.Load()
-    if client != nil {
-        return client, nil
-    }
+	this.clientLock.Lock()
+	defer this.clientLock.Unlock()
+	// pesimistic check
+	client = this.client.Load()
+	if client != nil {
+			return client, nil
+	}
 
-    ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
-    defer contextCancel()
+	ctx, contextCancel := context.WithTimeout(ctx, this.Timeout)
+	defer contextCancel()
 
-    var uri = fmt.Sprintf("mongodb://%v:%v", this.ServerHost, this.ServerPort)
-    log.Printf("Using URI: " + uri)
+	var uri = fmt.Sprintf("mongodb://%v:%v", this.ServerHost, this.ServerPort)
+	log.Printf("Using URI: " + uri)
 
-    if len(this.UserName) != 0 {
-        uri = fmt.Sprintf("mongodb://%v:%v@%v:%v", this.UserName, this.Password, this.ServerHost, this.ServerPort)
-    }
+	if len(this.UserName) != 0 {
+			uri = fmt.Sprintf("mongodb://%v:%v@%v:%v", this.UserName, this.Password, this.ServerHost, this.ServerPort)
+	}
 
-    if client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetConnectTimeout(10*time.Second)); err != nil {
-        return nil, err
-    } else {
-        this.client.Store(client)
-        return client, nil
-    }
+	if client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri).SetConnectTimeout(10*time.Second)); err != nil {
+			return nil, err
+	} else {
+			this.client.Store(client)
+			return client, nil
+	}
 }
 
 func (this *mongoSvc[DocType]) Disconnect(ctx context.Context) error {
-    client := this.client.Load()
+	client := this.client.Load()
 
 	if client != nil {
 			this.clientLock.Lock()

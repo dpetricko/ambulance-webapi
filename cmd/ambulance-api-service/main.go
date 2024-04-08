@@ -35,7 +35,7 @@ func main() {
         MaxAge: 12 * time.Hour,
     })
     engine.Use(corsMiddleware)
-    // request routings
+
     // setup context update  middleware
     dbService := db_service.NewMongoService[ambulance_wl.Ambulance](db_service.MongoServiceConfig{})
     defer dbService.Disconnect(context.Background())
@@ -43,6 +43,7 @@ func main() {
         ctx.Set("db_service", dbService)
         ctx.Next()
     })
+    // request routings
     ambulance_wl.AddRoutes(engine)
     engine.GET("/openapi", api.HandleOpenApi)
     engine.Run(":" + port)

@@ -56,7 +56,7 @@ spec:
               cpu: "0.1"
       containers:
         - name: dp-ambulance-wl-webapi-container
-          image: dpaho/ambulance-wl-webapi:latest
+          image: dpetricko/ambulance-wl-webapi:latest
           imagePullPolicy: Always
           ports:
             - name: webapi-port

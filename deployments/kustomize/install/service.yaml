@@ -6,7 +6,7 @@ spec:
   selector:
     pod: dp-ambulance-webapi-label
   ports:
-  - name: http
-    protocol: TCP
-    port: 80
-    targetPort: webapi-port
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: webapi-port

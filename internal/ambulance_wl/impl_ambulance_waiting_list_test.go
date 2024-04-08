@@ -2,14 +2,14 @@ package ambulance_wl
 
 import (
 	"context"
-    "net/http/httptest"
-    "strings"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
-    "github.com/stretchr/testify/mock"
-    "github.com/dpetricko/ambulance-webapi/internal/db_service"
+	"github.com/stretchr/testify/mock"
+	"github.com/dpetricko/ambulance-webapi/internal/db_service"
 	"github.com/stretchr/testify/suite"
 )
 
